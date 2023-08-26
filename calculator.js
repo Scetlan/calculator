@@ -1,54 +1,11 @@
+const arabicNumerals = Array.from({ length: 10 }, (_, i) => i + 1);
+const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
-const converterRomanNumerals = (operand1, operator, operand2) => {
-    const romansNumerals = {
-        'I': 1,
-        'IV': 4,
-        'V': 5,
-        'IX': 9,
-        'X': 10,
-        'XL': 40,
-        'L': 50,
-        'XC': 90,
-        'C': 100,
-        'CD': 400,
-        'D': 500,
-        'CM': 900,
-        'M': 1000,
-    }
+const isCorrectOperator = (operator) => ['*', '-', '+', '/'].includes(operator)
+const isCorrectNum = (num) => arabicNumerals.includes(num)
+const isRomanNumeral = (num) => romanNumerals.includes(num);
 
-    let arrKey = Object.keys(romansNumerals);
-    let num1 = 0;
-    let num2 = 0;
-
-    for (const key of arrKey) {
-        if (operand1.length < 2 && operand2.length < 2) {
-            if (key === operand1) {
-                num1 += romansNumerals[key];
-            }
-            if (key === operand2) {
-                num2 += romansNumerals[key];
-            }
-        } else if (operand1 === key && operand2 === key) {
-
-        } else {
-            const arrayOper1 = operand1.split('');
-            const arrayOper2 = operand2.split('');
-            let oper1 = 0;
-            let oper2 = 0;
-            for (const keyOper1 of arrayOper1) {
-                if (key === keyOper1) {
-                    oper1 += romansNumerals[key];
-                }
-            }
-            for (const keyOper2 of arrayOper2) {
-                if (key === keyOper2) {
-                    oper2 += romansNumerals[key];
-                }
-            }
-            console.log(oper1, oper2);
-        }
-    }
-
+function calcResult(num1, operator, num2) {
     let result;
     switch (operator) {
         case '+':
@@ -66,48 +23,77 @@ const converterRomanNumerals = (operand1, operator, operand2) => {
         default:
             result;
     }
-    return result < 1 ? '' : result;
+
+    return `${result}`;
+}
+
+const parseRomanToInt = (operand) => {
+    let roman = { I: 1, V: 5, X: 10 };
+    let num = 0;
+    for (let i = 0; i < operand.length; i++) {
+        if (i > 0 && roman[operand[i]] > roman[operand[i - 1]]) {
+            num += roman[operand[i]] - 2 * roman[operand[i - 1]];
+        } else {
+            num += roman[operand[i]];
+        }
+    }
+    return num;
+}
+
+const parseIntToRoman = (number) => {
+    let romanPairs = { C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+    let romanStr = '';
+
+    for (let i in romanPairs) {
+        while (number >= romanPairs[i]) {
+            romanStr += i;
+            number -= romanPairs[i];
+        }
+    }
+    return romanStr;
+}
+
+function parseParameters(num1, num2, isRomanCalculate) {
+    if (isRomanCalculate) {
+        num1 = parseRomanToInt(num1);
+        num2 = parseRomanToInt(num2);
+    } else {
+        num1 = parseInt(num1);
+        num2 = parseInt(num2);
+    }
+    return [num1, num2];
+}
+
+function validateParameters(operator, isRomanCalculate, isArabCalculate) {
+    if (!isRomanCalculate && !isArabCalculate) {
+        throw new Error('Некорректныe входные параметры');
+    }
+
+    if (!isCorrectOperator(operator)) {
+        throw new Error('Некорректный оператор');
+    }
 }
 
 function calculator(string) {
+    const params = string.split(' ');
 
-    if (typeof parseInt(string[0]) === Number && typeof parseInt(string[2]) === Number) {
-        const [num1, operator, num2] = string.split(' ').map(element => {
-            const num = parseInt(element);
-            if (isNaN(num)) {
-                return element;
-            }
-            return num;
-        });
-        let result;
-        switch (operator) {
-            case '+':
-                result = num1 + num2;
-                break;
-            case '-':
-                result = num1 - num2;
-                break;
-            case '/':
-                result = Math.floor(num1 / num2);
-                break;
-            case '*':
-                result = num1 * num2;
-                break;
-            default:
-                result;
-        }
-        return `${result}`;
-    } else {
-        const [operand1, operator, operand2] = string.split(' ')
-        const arabicNumericalSolution = converterRomanNumerals(operand1, operator, operand2);
-
-        console.log(arabicNumericalSolution);
+    if (params.length !== 3) {
+        throw new Error('Функция принимает не более и не менее 2-х символов');
     }
-}
-console.log(calculator('IX / XL'));
-// console.log(calculator('V * I'));
-// console.log(calculator('V * V'));
-// console.log(calculator('I - X'));
-// console.log(calculator('XX / II'));
-// console.log(calculator('XX / II'));
 
+    let [num1, operator, num2] = params;
+
+    const isRomanCalculate = isRomanNumeral(num1) && isRomanNumeral(num2);
+
+    [num1, num2] = parseParameters(num1, num2, isRomanCalculate);
+
+    const isArabCalculate = isCorrectNum(num1) && isCorrectNum(num2);
+
+    validateParameters(operator, isRomanCalculate, isArabCalculate);
+
+    const result = calcResult(num1, operator, num2)
+    return isRomanCalculate ? parseIntToRoman(result) : result;
+}
+
+const result = calculator('1 / 0');
+console.log(result);
